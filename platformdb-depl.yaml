@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: platformdb-depl
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: platformdb
+ template:
+  metadata:
+   labels:
+    app: platformdb
+  spec:
+   containers:
+    - name: platformdb
+      image: mcr.microsoft.com/mssql/server:2017-latest
+      ports:
+       - containerPort: 1433
+      env:
+      - name: MSSQL_PID
+        value: "Express"
+      - name: ACCEPT_EULA
+        value: "Y"
+      - name: MSSQL_SA_PASSWORD
+        valueFrom:
+         secretKeyRef:
+          name: dbcredentials
+          key: MSSQL_SA_PASSWORD
+      volumeMounts:
+      - mountPath: /var/opt/mssql/data
+        name: platformdb
+   volumes:
+   - name: platformdb
+     persistentVolumeClaim:
+      claimName: mssql-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: platformdb-clusterip-srv
+spec:
+ type: ClusterIP
+ selector:
+  app: platformdb
+ ports:
+ - name: platformdb
+   protocol: TCP
+   port: 1433
+   targetPort: 1433
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: platformdb-loadbalancer
+spec:
+ type: LoadBalancer
+ selector:
+  app: platformdb
+ ports:
+ - protocol: TCP
+   port: 1433
+   targetPort: 1433
