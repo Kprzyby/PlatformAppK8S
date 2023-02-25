@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: platformdb-depl
+ name: sqlserver-depl
 spec:
  replicas: 1
  selector:
   matchLabels:
-   app: platformdb
+   app: sqlserver
  template:
   metadata:
    labels:
-    app: platformdb
+    app: sqlserver
   spec:
    containers:
-    - name: platformdb
+    - name: sqlserver
       image: mcr.microsoft.com/mssql/server:2022-latest
       ports:
        - containerPort: 1433
@@ -29,22 +29,22 @@ spec:
           key: MSSQL_SA_PASSWORD
       volumeMounts:
       - mountPath: /var/opt/mssql/data
-        name: platformdb
+        name: sqlserver
    volumes:
-   - name: platformdb
+   - name: sqlserver
      persistentVolumeClaim:
       claimName: mssql-claim
 ---
 apiVersion: v1
 kind: Service
 metadata:
- name: platformdb-clusterip-srv
+ name: sqlserver-clusterip-srv
 spec:
  type: ClusterIP
  selector:
-  app: platformdb
+  app: sqlserver
  ports:
- - name: platformdb
+ - name: sqlserver
    protocol: TCP
    port: 1433
    targetPort: 1433
@@ -52,11 +52,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
- name: platformdb-loadbalancer
+ name: sqlserver-loadbalancer
 spec:
  type: LoadBalancer
  selector:
-  app: platformdb
+  app: sqlserver
  ports:
  - protocol: TCP
    port: 1433
